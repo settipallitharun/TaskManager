@@ -62,25 +62,30 @@ const getDashboardStats = async (req, res) => {
     const activityParams = userRole !== 'Admin' ? [userId] : [];
 
     // Get upcoming deadlines
-    const deadlinesQuery = `
-      SELECT 
-        t.id,
-        t.title,
-        t.due_date,
-        t.priority,
-        t.status,
-        p.title as project_title,
-        u.name as assigned_to_name
-      FROM tasks t
-      JOIN projects p ON t.project_id = p.id
-      LEFT JOIN users u ON t.assigned_to = u.id
-      ${userRole !== 'Admin' ? 'JOIN project_members pm ON p.id = pm.project_id WHERE (t.assigned_to = $1 OR t.assigned_to IS NULL) AND (p.created_by = $1 OR pm.user_id = $1)' : 'WHERE t.due_date IS NOT NULL'}
-      AND t.status != 'Done'
-      AND t.due_date >= CURRENT_DATE
-      AND t.due_date <= CURRENT_DATE + INTERVAL '7 days'
-      ORDER BY t.due_date ASC
-      LIMIT 5
-    `;
+    const deadlinesQuery = userRole !== 'Admin'
+      ? `SELECT t.id, t.title, t.due_date, t.priority, t.status,
+              p.title as project_title, u.name as assigned_to_name
+         FROM tasks t
+         JOIN projects p ON t.project_id = p.id
+         LEFT JOIN users u ON t.assigned_to = u.id
+         JOIN project_members pm ON p.id = pm.project_id
+         WHERE (t.assigned_to = $1 OR t.assigned_to IS NULL)
+           AND (p.created_by = $1 OR pm.user_id = $1)
+           AND t.status != 'Done'
+           AND t.due_date IS NOT NULL
+           AND t.due_date >= CURRENT_DATE
+           AND t.due_date <= CURRENT_DATE + INTERVAL '7 days'
+         ORDER BY t.due_date ASC LIMIT 5`
+      : `SELECT t.id, t.title, t.due_date, t.priority, t.status,
+              p.title as project_title, u.name as assigned_to_name
+         FROM tasks t
+         JOIN projects p ON t.project_id = p.id
+         LEFT JOIN users u ON t.assigned_to = u.id
+         WHERE t.status != 'Done'
+           AND t.due_date IS NOT NULL
+           AND t.due_date >= CURRENT_DATE
+           AND t.due_date <= CURRENT_DATE + INTERVAL '7 days'
+         ORDER BY t.due_date ASC LIMIT 5`;
     const deadlinesParams = userRole !== 'Admin' ? [userId] : [];
 
     // Execute all queries in parallel

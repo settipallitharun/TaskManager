@@ -279,7 +279,7 @@ const getTaskStats = async (req, res) => {
       SELECT 
         COUNT(*) as total,
         COUNT(CASE WHEN status = 'Done' THEN 1 END) as completed,
-        COUNT(CASE WHEN status = 'In Progress' THEN 1 END) in_progress,
+        COUNT(CASE WHEN status = 'In Progress' THEN 1 END) as in_progress,
         COUNT(CASE WHEN status = 'Todo' THEN 1 END) as pending,
         COUNT(CASE WHEN due_date < CURRENT_DATE AND status != 'Done' THEN 1 END) as overdue,
         COUNT(CASE WHEN priority = 'High' THEN 1 END) as high_priority,

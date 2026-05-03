@@ -8,8 +8,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL || true : true,
-    credentials: true,
+    origin: '*',
+    credentials: false,
   })
 );
 app.use(express.json());
