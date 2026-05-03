@@ -28,6 +28,14 @@ app.use('/api/team', teamRoutes);
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
+// Serve frontend
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
+
+
 
 const PORT = Number(process.env.PORT) || 5050;
 app.listen(PORT, () => {
