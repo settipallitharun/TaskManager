@@ -2,6 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
+const initDatabase = require('./database/init');
 
 const app = express();
 
@@ -28,6 +29,16 @@ app.use('/api/team', teamRoutes);
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
+
+app.get('/api/debug/env', (req, res) => {
+  res.json({
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    HAS_JWT_SECRET: !!process.env.JWT_SECRET,
+    HAS_DATABASE_URL: !!process.env.DATABASE_URL,
+    HAS_DB_HOST: !!process.env.DB_HOST,
+  });
+});
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
@@ -38,9 +49,10 @@ app.get("*", (req, res) => {
 
 
 const PORT = Number(process.env.PORT) || 5050;
-app.listen(PORT, () => {
-  console.log(`Server running on http://127.0.0.1:${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
   if (!process.env.JWT_SECRET) {
-    console.warn('⚠️  JWT_SECRET is missing in server/.env — auth will fail.');
+    console.warn('⚠️  JWT_SECRET is missing — auth will fail.');
   }
+  await initDatabase();
 });

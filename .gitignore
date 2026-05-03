@@ -3,6 +3,7 @@ node_modules/
 .env.*
 !.env.example
 dist/
+client/dist/
 build/
 .DS_Store
 *.log
