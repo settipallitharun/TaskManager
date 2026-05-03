@@ -6,12 +6,7 @@ const initDatabase = require('./database/init');
 
 const app = express();
 
-app.use(
-  cors({
-    origin: '*',
-    credentials: false,
-  })
-);
+app.use(cors({ origin: '*', credentials: false }));
 app.use(express.json());
 
 const authRoutes = require('./routes/auth');
@@ -26,9 +21,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/team', teamRoutes);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
-});
+app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
 app.get('/api/debug/env', (req, res) => {
   res.json({
@@ -36,23 +29,33 @@ app.get('/api/debug/env', (req, res) => {
     PORT: process.env.PORT,
     HAS_JWT_SECRET: !!process.env.JWT_SECRET,
     HAS_DATABASE_URL: !!process.env.DATABASE_URL,
-    HAS_DB_HOST: !!process.env.DB_HOST,
   });
 });
-// Serve frontend
-app.use(express.static(path.join(__dirname, "../client/dist")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, '../client/dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-
+// Global error handler — shows real error in logs
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
+});
 
 const PORT = Number(process.env.PORT) || 5050;
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  if (!process.env.JWT_SECRET) {
-    console.warn('⚠️  JWT_SECRET is missing — auth will fail.');
-  }
-  await initDatabase();
-});
+
+// Init DB FIRST, then start listening
+initDatabase()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('❌ Failed to init database, starting anyway:', err.message);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`⚠️  Server running on port ${PORT} (DB init failed)`);
+    });
+  });

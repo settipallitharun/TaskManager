@@ -3,13 +3,15 @@ const path = require('path');
 const { pool } = require('./connection');
 
 async function initDatabase() {
+  const schemaPath = path.join(__dirname, '../../database/schema.sql');
+  const schema = fs.readFileSync(schemaPath, 'utf8');
+
   try {
-    const schemaPath = path.join(__dirname, '../../database/schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
     await pool.query(schema);
     console.log('✅ Database schema ready');
   } catch (err) {
-    console.error('❌ Database init error:', err.message);
+    // IF NOT EXISTS means this is safe to re-run — log but don't crash
+    console.error('⚠️  Schema init warning:', err.message);
   }
 }
 
